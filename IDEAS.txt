@@ -1,0 +1,16 @@
+THEME: Near Sighted / Blind
+
+Horror
+    - Vision taken away
+    - line-of-sight?
+    - vision not reliable far away
+        - As things get closer they reveal their true form
+        - Can't tell if something is friend of foe from a distance
+        - Flashlight reveals true form
+
+Goal:
+    - Ride your bike to check on grandma
+        - When you arrive she asks if you've shined the flashlight on yourself
+    - Wake up
+    - Find someone
+
