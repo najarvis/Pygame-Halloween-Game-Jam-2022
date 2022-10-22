@@ -100,7 +100,7 @@ class TwoFaced(Entity):
 
     def set_visible(self, visible):
         self._visible = visible
-        new_base_image = self.image1 if visible else self.image2
+        new_base_image = self.image2 if visible else self.image1
         if new_base_image != self.base_image:
             self.base_image = new_base_image
             self.dirty = True

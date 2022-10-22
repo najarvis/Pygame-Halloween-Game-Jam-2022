@@ -30,6 +30,16 @@ class World:
             humanoid = entity.TwoFaced(pygame.Vector2(random.randint(16, 1264), random.randint(16, 704)), im1, im2)
             self.other_entity_group.add(humanoid)
 
+        self.create_fog_images()
+
+    def create_fog_images(self):
+        self.fog_image = pygame.Surface(helpers.SCREEN_SIZE, pygame.SRCALPHA)
+        self.fog_image.fill((0, 0, 0))
+        view_image = pygame.Surface(helpers.SCREEN_SIZE, pygame.SRCALPHA)
+        pygame.draw.circle(view_image, (255, 255, 255, 127), helpers.CENTER, 100)
+        pygame.draw.circle(view_image, (255, 255, 255, 255), helpers.CENTER, 75)
+        self.fog_image.blit(view_image, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+
     def handle_input(self):
         self.player_acceleration = pygame.Vector2()
         self.player_rotation = 0
@@ -67,3 +77,5 @@ class World:
         self.draw_group_offset(self.other_entity_group, surface)
         self.draw_group_offset(self.player_group, surface)
         self.draw_group_offset(self.light_group, surface)
+
+        surface.blit(self.fog_image, (0, 0))

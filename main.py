@@ -28,7 +28,7 @@ def run():
         game_world.handle_input()
         game_world.update(delta)
 
-        screen.fill((25, 25, 25))
+        screen.fill((50, 25, 15))
 
         game_world.draw(screen)
 

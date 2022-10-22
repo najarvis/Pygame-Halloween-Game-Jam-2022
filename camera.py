@@ -1,6 +1,6 @@
 import pygame
 
-from helpers import SCREEN_SIZE, TILE_SIZE
+from helpers import SCREEN_SIZE
 
 class Camera:
     """Used to keep track of what should be on the screen. 
@@ -15,26 +15,16 @@ class Camera:
         self._position = pos
         self.initial_position = pos
 
-    @staticmethod
-    def world_to_px_coords(coord: pygame.Vector2) -> pygame.Vector2:
-        return pygame.Vector2(coord.x * TILE_SIZE[0], coord.y * TILE_SIZE[1])
-
-    @staticmethod
-    def px_to_world_coords(coord: pygame.Vector2) -> pygame.Vector2:
-        return pygame.Vector2(coord.x / TILE_SIZE[0], coord.y / TILE_SIZE[1])
-
     def world_to_screen(self, coord: pygame.Vector2) -> pygame.Vector2:
-        """Convert a coordinate from world (tile) space to screen space"""
+        """Convert a coordinate from world space to screen space"""
 
-        offset_from_camera_world = (coord - self._position) * self.scale
-        offset_from_camera_px = Camera.world_to_px_coords(offset_from_camera_world)
+        offset_from_camera_px = (coord - self._position) * self.scale
         return offset_from_camera_px + Camera.SCREEN_CENTER
 
     def screen_to_world(self, coord: pygame.Vector2) -> pygame.Vector2:
-        """Convert a coordinate from screen space to world (tile) space"""
+        """Convert a coordinate from screen space to world space"""
 
-        offset_from_camera_px = coord - Camera.SCREEN_CENTER
-        offset_from_camera_world = Camera.px_to_world_coords(offset_from_camera_px)
+        offset_from_camera_world = coord - Camera.SCREEN_CENTER
         return (offset_from_camera_world / self.scale) + self._position
 
     def get_scale(self) -> float:
