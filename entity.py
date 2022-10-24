@@ -60,7 +60,8 @@ class Entity(pygame.sprite.Sprite):
 
     def move_towards_point(self, point, delta):
         direction = point - self.position
-        self.position += direction.normalize() * self.speed * delta
+        #self.position += direction.normalize() * self.speed * delta
+        self.velocity += direction.normalize() * delta * 10
         self.update_rect()
 
     """Properties"""
