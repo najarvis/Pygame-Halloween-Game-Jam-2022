@@ -42,7 +42,7 @@ class World:
         self.init_sounds()
 
     def init_sounds(self) -> None:
-        # TODO: Compress these to mp3 to save space
+        """Load sounds from the disc and create our library of sounds"""
         pygame.mixer.init()
         self.sound_library = {}
 
@@ -51,11 +51,14 @@ class World:
             sound_name = fname[len(path_start):-4]
             self.sound_library[sound_name] = pygame.mixer.Sound(fname)
 
+        # Create some lists of the keys ahead of time if we want to play from a random subset of sounds
         self.hurt_noises = [key for key in self.sound_library if "player_hurt" in key]
         self.ambient_noises = [key for key in self.sound_library if "voice" in key]
 
-    def create_fog_images(self):
-        # Create images that will be used to mask the screen and obscure the players' vision
+    def create_fog_images(self) -> None:
+        """Create images that will be used to mask the screen and obscure the players' vision"""
+
+        # self.fog_image will act as a mask, and we will subtract from it what the player CAN see
         self.fog_image = pygame.Surface(helpers.SCREEN_SIZE, pygame.SRCALPHA)
         self.fog_image.fill((0, 0, 0))
 
@@ -72,7 +75,8 @@ class World:
 
         self.fog_image.blit(view_image, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
 
-    def handle_input(self):
+    def handle_input(self) -> None:
+        """Handle input of the player holding down keys or buttons"""
         self.player_acceleration = pygame.Vector2()
         self.player_rotation = 0
 
@@ -87,16 +91,24 @@ class World:
         if pressed_keys[pygame.K_s]:
             self.player_acceleration.y -= 100
 
-    def update(self, delta):
+    def update(self, delta: float) -> None:
+        """Update the position and states of all entities in the game"""
+
+        # First start with the player and their light sources
         self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
         self.light_group.update(delta)
 
+        # Update every monster or other entity.
         for other_entity in self.other_entity_group:
             other_entity.move_towards_point(self.player_sprite.position, delta)
             other_entity.update(pygame.Vector2(), 0, delta)
             visible = self.player_headlight.in_light(other_entity.position)
             other_entity.visible = visible
         
+        # Since the player's rect grows and shrinks as their image rotates,
+        # getting consistent collision will be difficult. Here we are creating a test
+        # sprite and giving it a constant 32x32 rect to fake collision.
+        # TODO: Change this to be radial or mask based collision
         test_sprite = pygame.sprite.Sprite()
         test_sprite.rect = pygame.Rect(0, 0, 32, 32)
         test_sprite.rect.center = self.player_sprite.rect.center
@@ -113,13 +125,15 @@ class World:
         self.camera.position = self.player_sprite.position
         self.fog_timer += delta
 
+        # Play ambient sounds from time to time to keep the player on edge
+        # TODO: Make the sounds get louder the closer to an enemy you are?
         self.sound_timer -= delta
         if self.sound_timer < 0:
             sound_choice = random.choice(self.ambient_noises)
             self.sound_library[sound_choice].play()
-            self.sound_timer += 5
+            self.sound_timer += 15
 
-    def draw_group_offset(self, group, surface):
+    def draw_group_offset(self, group: pygame.sprite.Group, surface: pygame.Surface) -> None:
         """Draw the entities in a group relative to the camera"""
         for entity in group:
             new_pos = self.camera.world_to_screen(entity.position)
@@ -127,7 +141,8 @@ class World:
             new_rect.center = new_pos
             surface.blit(entity.image, new_rect)
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw the game world, the entities, and then constrain what the player can see"""
         self.create_fog_images()
         surface.blit(self.world_background, self.camera.world_to_screen(pygame.Vector2()))
         self.draw_group_offset(self.other_entity_group, surface)

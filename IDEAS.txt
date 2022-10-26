@@ -14,3 +14,13 @@ Goal:
     - Wake up
     - Find someone
 
+Monsters:
+    To keep the player on their toes, they should not be able to predict
+    what is and what is not dangerous.
+
+    Monster eyes will (sometimes) be visible in the darkness, though they
+    will intentionally be misleading. A bush could have eyes, or a monster might
+    not. 
+
+    Another idea is something looks dangerous, charges the player, then turns to
+    mist (particles) as they go through them

@@ -1,8 +1,6 @@
 import pygame
-import random
 
 import helpers
-
 import world
 
 

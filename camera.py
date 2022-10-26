@@ -1,6 +1,6 @@
 import pygame
 
-from helpers import SCREEN_SIZE
+from helpers import CENTER_X, CENTER_Y
 
 class Camera:
     """Used to keep track of what should be on the screen. 
@@ -8,7 +8,7 @@ class Camera:
     to/from screen space from/to world space
     """
 
-    SCREEN_CENTER = pygame.Vector2(SCREEN_SIZE) / 2
+    SCREEN_CENTER = pygame.Vector2((CENTER_X, CENTER_Y))
 
     def __init__(self, pos: pygame.Vector2):
         self._scale = 1.0
