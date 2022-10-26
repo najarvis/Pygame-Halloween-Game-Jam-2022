@@ -134,3 +134,56 @@ class TwoFaced(Entity):
         self.speed = 0 if self._visible else self.base_speed
 
     visible = property(get_visible, set_visible)
+
+class SceneryEntity(Entity):
+    """An entity meant to not interact with other entities, but to
+    follow keyframes (for animations). If an entity has been started
+    and done_status is true, it has likely finished its animation
+    (Unless you plan to add more keyframes).
+    """
+
+    def __init__(self, position: pygame.Vector, image: pygame.Surface):
+        Entity.__init__(self, position, image)
+        self.timer = 0
+        self.keyframes = []
+        self.done_status = True
+        self.current_goal = None
+        self.started = False
+
+    def add_keyframe(self, location: pygame.Vector2, time: float) -> None:
+        self.keyframes.append((location, time))
+
+    def get_next_goal(self) -> bool:
+        """Updates the entity with the information from the next keyframe.
+        Returns False is there are no keyframes.
+        """
+
+        if len(self.keyframes) == 0:
+            return False
+        
+        next_keyframe = self.keyframes.pop(0)
+        self.current_goal = next_keyframe[0]
+        self.timer = next_keyframe[1]
+        self.started = True
+        return True
+
+    def update(self, delta: float) -> None:
+        """Since these aren't acted upon by force, a scenery entity only
+        needs the delta to update.
+        """
+        if self.current_goal is None:
+            self.done_status = not self.get_next_goal()
+            return
+
+        self.timer -= delta
+        if self.timer <= 0:
+            self.position = self.current_goal
+            self.current_goal = None
+            self.timer = 0
+        else:
+            offset = self.current_goal - self.position
+            speed = offset.length() / self.timer 
+            if offset.length() > offset.epsilon:
+                offset.scale_to_length(speed)
+                self.position += offset * delta
+            

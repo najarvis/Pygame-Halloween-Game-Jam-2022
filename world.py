@@ -30,8 +30,13 @@ class World:
         im2 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid2.png", alpha=True)
         self.other_entity_group = pygame.sprite.Group()
         for _ in range(1):
-            humanoid = entity.TwoFaced(pygame.Vector2(helpers.SCREEN_SIZE), im1, im2)
+            humanoid = entity.TwoFaced(pygame.Vector2(helpers.CENTER), im1, im2)
             self.other_entity_group.add(humanoid)
+
+        self.scenery_entities = pygame.sprite.Group()
+        self.player_scenery_sprite = None
+        self.bike_scenery_sprite = None
+        self.player_in_animation = False
 
         self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/test_game_world.png")
 
@@ -94,8 +99,17 @@ class World:
     def update(self, delta: float) -> None:
         """Update the position and states of all entities in the game"""
 
-        # First start with the player and their light sources
-        self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
+        self.scenery_entities.update(delta)
+        if self.player_scenery_sprite is not None:
+            self.player_in_animation = True
+            self.player_sprite.position = self.player_scenery_sprite.position.copy()
+            if self.player_scenery_sprite.done_status:
+                self.player_scenery_sprite.kill()
+                self.player_scenery_sprite = None
+        else:
+            # First start with the player and their light sources
+            self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
+            self.player_in_animation = False
         self.light_group.update(delta)
 
         player_collision_radius = 16
@@ -105,19 +119,31 @@ class World:
         for other_entity in self.other_entity_group:
             #other_entity.move_towards_point(self.player_sprite.position, delta)
             player_offset = self.player_sprite.position - other_entity.position
-            other_entity.update(player_offset.normalize() * 100, 0, delta)
+            enemy_acceleration = player_offset.normalize() * 100 # Accelerate towards the player at 100px/s^2
+            other_entity.update(enemy_acceleration, 0, delta)
             visible = self.player_headlight.in_light(other_entity.position)
             other_entity.visible = visible
 
-            if (other_entity.position - self.player_sprite.position).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
+            if (player_offset).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
                 sound_choice = random.choice(self.hurt_noises)
                 self.sound_library[sound_choice].play()
 
                 # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
                 # the player getting yeeted back, and once they land, reposition and reactivate the player. 
                 # Avoids the messiness of the player moving while getting launched. 
-                self.player_sprite.velocity = pygame.Vector2()
+                self.player_sprite.on_bike = False
                 other_entity.kill()
+
+                player_img = ImageLoader.ImageLoader.GetImage("assets/imgs/Ghosty1.png", alpha=True)
+                bike_img = ImageLoader.ImageLoader.GetImage("assets/imgs/bike.png")
+                self.player_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), player_img)
+                self.player_scenery_sprite.add_keyframe(self.player_sprite.position + enemy_acceleration, 2.0)
+                self.scenery_entities.add(self.player_scenery_sprite)
+                
+                self.bike_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), bike_img)
+                self.bike_scenery_sprite.add_keyframe(self.player_sprite.position - enemy_acceleration, 1.5)
+                self.scenery_entities.add(self.bike_scenery_sprite)
+                self.player_in_animation = True
 
         self.camera.position = self.player_sprite.position
         self.fog_timer += delta
@@ -143,7 +169,9 @@ class World:
         self.create_fog_images()
         surface.blit(self.world_background, self.camera.world_to_screen(pygame.Vector2()))
         self.draw_group_offset(self.other_entity_group, surface)
-        self.draw_group_offset(self.player_group, surface)
+        if not self.player_in_animation:
+            self.draw_group_offset(self.player_group, surface)
+        self.draw_group_offset(self.scenery_entities, surface)
         self.draw_group_offset(self.light_group, surface)
 
         surface.blit(self.fog_image, (0, 0))
