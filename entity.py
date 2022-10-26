@@ -2,6 +2,9 @@ import pygame
 import random
 
 class Entity(pygame.sprite.Sprite):
+    """An entity is an object that is not part of the terrain, and can move and interact with other
+    entities.
+    """
 
     next_id = 0
 
@@ -21,12 +24,17 @@ class Entity(pygame.sprite.Sprite):
 
         self.dirty = True
         self.children = []
+
+        # This will be unique to each entity
         self.id = Entity.next_id
         Entity.next_id = self.id + 1
 
     def update(self, acceleration: pygame.Vector2(), rotation: float, delta: float):
-        """Units of acceleration: units/s^2
-        Units of rotation: rads/s
+        """
+        Update function called every frame. Updates the entity's position and orientation.
+
+        Units of acceleration: px/s^2
+        Units of rotation: degrees/s
         units of delta: s
         """
         self.velocity += acceleration * delta
@@ -61,7 +69,7 @@ class Entity(pygame.sprite.Sprite):
     def move_towards_point(self, point, delta):
         direction = point - self.position
         #self.position += direction.normalize() * self.speed * delta
-        self.velocity += direction.normalize() * delta * 10
+        self.velocity += direction.normalize() * delta * self.speed
         self.update_rect()
 
     """Properties"""
@@ -81,6 +89,7 @@ class Entity(pygame.sprite.Sprite):
         return self._position
 
     def set_position(self, new_position):
+        # NOTE: This does NOT get called if a component of position is changed (i.e. pos.x += 1)
         if new_position != self._position:
             self._position = new_position
             self.dirty = False
@@ -88,6 +97,7 @@ class Entity(pygame.sprite.Sprite):
     position = property(get_position, set_position)
 
 class TwoFaced(Entity):
+
 
     def __init__(self, position, im1, im2):
         Entity.__init__(self, position, im1)

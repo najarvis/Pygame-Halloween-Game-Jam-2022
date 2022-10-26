@@ -11,7 +11,7 @@ import light
 import camera
 import helpers
 
-import ImageLoader
+from gametools import ImageLoader
 
 class World:
 
@@ -26,10 +26,10 @@ class World:
         self.player_sprite.add_child(self.player_headlight)
 
         # Later the monsters will be placed intentionally, random locations for now to test
-        im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True)
+        im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True, override_size=(200,200))
         im2 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid2.png", alpha=True)
         self.other_entity_group = pygame.sprite.Group()
-        for _ in range(50):
+        for _ in range(5):
             humanoid = entity.TwoFaced(pygame.Vector2(random.randint(16, 1264), random.randint(16, 704)), im1, im2)
             self.other_entity_group.add(humanoid)
 
@@ -51,22 +51,31 @@ class World:
             sound_name = fname[len(path_start):-4]
             self.sound_library[sound_name] = pygame.mixer.Sound(fname)
 
+        self.hurt_noises = [key for key in self.sound_library if "player_hurt" in key]
+        self.ambient_noises = [key for key in self.sound_library if "voice" in key]
+
     def create_fog_images(self):
         # Create images that will be used to mask the screen and obscure the players' vision
         self.fog_image = pygame.Surface(helpers.SCREEN_SIZE, pygame.SRCALPHA)
         self.fog_image.fill((0, 0, 0))
+
+        # Draw the shrinking ambient light
         view_image = pygame.Surface(helpers.SCREEN_SIZE, pygame.SRCALPHA)
         pygame.draw.circle(view_image, (255, 255, 255, 5), helpers.CENTER, 400 - self.fog_timer)
         pygame.draw.circle(view_image, (255, 255, 255, 127), helpers.CENTER, 200 - self.fog_timer)
         pygame.draw.circle(view_image, (255, 255, 255, 255), helpers.CENTER, 175 - self.fog_timer)
+
+        # Add player light to view image
         light_rect = self.player_headlight.rect.copy()
         light_rect.center = helpers.CENTER
         view_image.blit(self.player_headlight.image, light_rect)
+
         self.fog_image.blit(view_image, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
 
     def handle_input(self):
         self.player_acceleration = pygame.Vector2()
         self.player_rotation = 0
+
         pressed_keys = pygame.key.get_pressed()
         if pressed_keys[pygame.K_a]:
             # Rotate clockwise one rad/s
@@ -92,10 +101,12 @@ class World:
         test_sprite.rect = pygame.Rect(0, 0, 32, 32)
         test_sprite.rect.center = self.player_sprite.rect.center
         if (collided_enemy := pygame.sprite.spritecollideany(test_sprite, self.other_entity_group)) is not None:
-            hurt_noises = [key for key in self.sound_library if "player_hurt" in key]
-            sound_choice = random.choice(hurt_noises)
+            sound_choice = random.choice(self.hurt_noises)
             self.sound_library[sound_choice].play()
 
+            # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
+            # the player getting yeeted back, and once they land, reposition and reactivate the player. 
+            # Avoids the messiness of the player moving while getting launched. 
             self.player_sprite.velocity = pygame.Vector2()
             collided_enemy.kill()
 
@@ -104,8 +115,7 @@ class World:
 
         self.sound_timer -= delta
         if self.sound_timer < 0:
-            ambient_noises = [key for key in self.sound_library if "voice" in key]
-            sound_choice = random.choice(ambient_noises)
+            sound_choice = random.choice(self.ambient_noises)
             self.sound_library[sound_choice].play()
             self.sound_timer += 5
 

@@ -7,7 +7,7 @@ import world
 
 
 def run():
-    screen = pygame.display.set_mode(helpers.SCREEN_SIZE)
+    screen = pygame.display.set_mode(helpers.SCREEN_SIZE, pygame.FULLSCREEN)
     pygame.display.set_caption("Spooky game for game jam!")
 
     clock = pygame.time.Clock()
@@ -28,6 +28,7 @@ def run():
         game_world.handle_input()
         game_world.update(delta)
 
+        # Background
         screen.fill((50, 25, 15))
 
         game_world.draw(screen)

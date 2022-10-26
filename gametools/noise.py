@@ -1,7 +1,6 @@
 import math
 import random
 import pygame
-import functools
 
 def sin01(val: float) -> float:
     """Returns the sine of a value mapped between 0 and 1"""

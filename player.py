@@ -2,7 +2,7 @@ import pygame
 import math
 
 import entity
-import ImageLoader
+from gametools import ImageLoader
 
 class Player(entity.Entity):
 
@@ -32,6 +32,7 @@ class Player(entity.Entity):
         self.update_rect()
 
     def movement_on_bike(self, acceleration, rotation, delta):
+        # On bike you have a higher max speed but have a slower turn speed
         if acceleration.y == 0.0:
             self.velocity *= 0.5 ** delta
 
