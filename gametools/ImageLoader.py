@@ -56,3 +56,8 @@ class ImageLoader:
                 image_sizes[override_size] = image_to_add
 
         return image_to_add
+
+    @staticmethod
+    def return_image_set(pattern: str, override_size: tuple[int, int] | None = None, alpha: bool = False) -> list[pygame.Surface]:
+        matching_paths = [path for path in ImageLoader.loaded_images_cache if pattern in path]
+        return [ImageLoader.GetImage(path, override_size, alpha) for path in matching_paths]
