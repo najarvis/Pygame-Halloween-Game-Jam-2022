@@ -1,7 +1,9 @@
 from __future__ import annotations
-import random
 
 import pygame
+from state_manager import StateManager
+from creature_states import CreatureStateSeeking, CreatureStateWaiting
+import world
 
 class Entity(pygame.sprite.Sprite):
     """An entity is an object that is not part of the terrain, and can move and interact with other
@@ -10,7 +12,7 @@ class Entity(pygame.sprite.Sprite):
 
     next_id = 0
 
-    def __init__(self, position: pygame.Vector2(), base_image: pygame.Surface):
+    def __init__(self, position: pygame.Vector2(), base_image: pygame.Surface, world: world.World):
         pygame.sprite.Sprite.__init__(self)
         self.base_image = base_image
         self.image = self.base_image.copy()
@@ -24,6 +26,9 @@ class Entity(pygame.sprite.Sprite):
 
         self.speed = 100 # Max speed
 
+        # Store a reference to the world to be able to easily access its data
+        self.world = world
+
         # Whether or not the sprite's image should be re-drawn
         self.dirty = True
 
@@ -33,6 +38,8 @@ class Entity(pygame.sprite.Sprite):
         # This will be unique to each entity
         self.id = Entity.next_id
         Entity.next_id = self.id + 1
+
+        self.state_manager = StateManager()
 
     def update(self, acceleration: pygame.Vector2, rotation: float, delta: float) -> None:
         """
@@ -142,8 +149,8 @@ class SceneryEntity(Entity):
     (Unless you plan to add more keyframes).
     """
 
-    def __init__(self, position: pygame.Vector, image: pygame.Surface):
-        Entity.__init__(self, position, image)
+    def __init__(self, position: pygame.Vector, image: pygame.Surface, world: world.World):
+        Entity.__init__(self, position, image, world)
         self.timer = 0
         self.keyframes = []
         self.done_status = True
@@ -151,6 +158,10 @@ class SceneryEntity(Entity):
         self.started = False
 
     def add_keyframe(self, location: pygame.Vector2, time: float) -> None:
+        """Add a location the SE should move towards. time is how long it
+        should take to get there
+        """
+
         self.keyframes.append((location, time))
 
     def get_next_goal(self) -> bool:

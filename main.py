@@ -5,7 +5,7 @@ import world
 
 
 def run():
-    screen = pygame.display.set_mode(helpers.SCREEN_SIZE, pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(helpers.SCREEN_SIZE)
     pygame.display.set_caption("Spooky game for game jam!")
 
     clock = pygame.time.Clock()

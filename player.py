@@ -6,10 +6,10 @@ import entity
 
 class Player(entity.Entity):
 
-    def __init__(self, position: pygame.Vector2):
+    def __init__(self, position: pygame.Vector2, world):
         player_img = ImageLoader.ImageLoader.GetImage("assets/imgs/BikePlayer.png", alpha=True)
         
-        entity.Entity.__init__(self, position, player_img)
+        entity.Entity.__init__(self, position, player_img, world)
 
         self.on_bike = True
     

@@ -8,7 +8,7 @@ import entity
 class Light(entity.Entity):
     """A light source that can reveal the true nature of others'"""
 
-    def __init__(self, position, angle_offset=0):
+    def __init__(self, position, world, angle_offset=0):
         self.arc = 20.0 * helpers.DEG_TO_RAD # degrees
         size = 500
         center = size / 2
@@ -33,7 +33,7 @@ class Light(entity.Entity):
         pygame.draw.polygon(light_image, (255, 255, 0, 127), ((center + 20, center), *points))
 
         # Finally do the entity constructor once we have the image
-        entity.Entity.__init__(self, position, light_image)
+        entity.Entity.__init__(self, position, light_image, world)
 
     def in_light(self, check_pos: pygame.Vector2) -> bool:
         """Returns true if `check_pos` is within the light cone."""

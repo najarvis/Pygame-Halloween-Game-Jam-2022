@@ -7,6 +7,7 @@ import pygame
 import player
 import entity
 import light
+import creature
 
 import camera
 import helpers
@@ -18,20 +19,21 @@ class World:
     def __init__(self):
         self.camera = camera.Camera(pygame.Vector2())
 
-        self.player_sprite = player.Player(pygame.Vector2(250, 250))
+        self.player_sprite = player.Player(pygame.Vector2(250, 250), self)
         self.player_group = pygame.sprite.GroupSingle(self.player_sprite)
 
-        self.player_headlight = light.Light(pygame.Vector2(helpers.WIDTH / 2, helpers.HEIGHT / 2))
+        self.player_headlight = light.Light(pygame.Vector2(helpers.WIDTH / 2, helpers.HEIGHT / 2), self)
         self.light_group = pygame.sprite.Group(self.player_headlight)
         self.player_sprite.add_child(self.player_headlight)
 
         # Later the monsters will be placed intentionally, random locations for now to test
-        im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True)
-        im2 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid2.png", alpha=True)
-        self.other_entity_group = pygame.sprite.Group()
-        for _ in range(1):
-            humanoid = entity.TwoFaced(pygame.Vector2(helpers.CENTER), im1, im2)
-            self.other_entity_group.add(humanoid)
+        # im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True)
+        # im2 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid2.png", alpha=True)
+        creature_sprite = creature.Creature(pygame.Vector2(helpers.CENTER), self)
+        self.other_entity_group = pygame.sprite.Group(creature_sprite)
+        # for _ in range(1):
+        #     humanoid = entity.TwoFaced(pygame.Vector2(helpers.CENTER), im1, im2)
+        #     self.other_entity_group.add(humanoid)
 
         self.scenery_entities = pygame.sprite.Group()
         self.player_scenery_sprite = None
@@ -96,6 +98,15 @@ class World:
         if pressed_keys[pygame.K_s]:
             self.player_acceleration.y -= 100
 
+        # If the player was knocked off their bike, they can run over to it and get back on with SPACE
+        if pressed_keys[pygame.K_SPACE]:
+            if self.bike_scenery_sprite is not None:
+                distance = (self.bike_scenery_sprite.position - self.player_sprite.position).magnitude_squared()
+                if distance < 32 * 32:
+                    self.player_sprite.on_bike = True
+                    self.bike_scenery_sprite.kill()
+                    self.bike_scenery_sprite = None
+
     def update(self, delta: float) -> None:
         """Update the position and states of all entities in the game"""
 
@@ -103,6 +114,7 @@ class World:
         if self.player_scenery_sprite is not None:
             self.player_in_animation = True
             self.player_sprite.position = self.player_scenery_sprite.position.copy()
+            self.player_headlight.position = self.bike_scenery_sprite.position.copy()
             if self.player_scenery_sprite.done_status:
                 self.player_scenery_sprite.kill()
                 self.player_scenery_sprite = None
@@ -119,12 +131,13 @@ class World:
         for other_entity in self.other_entity_group:
             #other_entity.move_towards_point(self.player_sprite.position, delta)
             player_offset = self.player_sprite.position - other_entity.position
-            enemy_acceleration = player_offset.normalize() * 100 # Accelerate towards the player at 100px/s^2
-            other_entity.update(enemy_acceleration, 0, delta)
+            player_offset_normalize = player_offset.normalize()
+            #enemy_acceleration = player_offset.normalize() * 100 # Accelerate towards the player at 100px/s^2
+            other_entity.update(delta)
             visible = self.player_headlight.in_light(other_entity.position)
             other_entity.visible = visible
 
-            if (player_offset).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
+            if not self.player_in_animation and (player_offset).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
                 sound_choice = random.choice(self.hurt_noises)
                 self.sound_library[sound_choice].play()
 
@@ -134,14 +147,14 @@ class World:
                 self.player_sprite.on_bike = False
                 other_entity.kill()
 
-                player_img = ImageLoader.ImageLoader.GetImage("assets/imgs/Ghosty1.png", alpha=True)
+                player_img = ImageLoader.ImageLoader.GetImage("assets/imgs/player.png", alpha=True)
                 bike_img = ImageLoader.ImageLoader.GetImage("assets/imgs/bike.png")
-                self.player_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), player_img)
-                self.player_scenery_sprite.add_keyframe(self.player_sprite.position + enemy_acceleration, 2.0)
+                self.player_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), player_img, self)
+                self.player_scenery_sprite.add_keyframe(self.player_sprite.position + player_offset_normalize * 100, 2.0)
                 self.scenery_entities.add(self.player_scenery_sprite)
                 
-                self.bike_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), bike_img)
-                self.bike_scenery_sprite.add_keyframe(self.player_sprite.position - enemy_acceleration, 1.5)
+                self.bike_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), bike_img, self)
+                self.bike_scenery_sprite.add_keyframe(self.player_sprite.position - player_offset_normalize * 100, 1.5)
                 self.scenery_entities.add(self.bike_scenery_sprite)
                 self.player_in_animation = True
 
