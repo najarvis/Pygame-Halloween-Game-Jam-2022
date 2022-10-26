@@ -22,7 +22,7 @@ class Entity(pygame.sprite.Sprite):
         self.rect.topleft = self.position
         self._orientation = 0
 
-        self.speed = random.uniform(9, 11)
+        self.speed = 100 # Max speed
 
         # Whether or not the sprite's image should be re-drawn
         self.dirty = True
@@ -43,6 +43,9 @@ class Entity(pygame.sprite.Sprite):
         units of delta: s
         """
         self.velocity += acceleration * delta
+        if self.velocity.length_squared() > self.speed * self.speed:
+            self.velocity.scale_to_length(self.speed)
+
         self.position += self.velocity * delta
 
         self.rect.center = self.position

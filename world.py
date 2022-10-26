@@ -26,11 +26,11 @@ class World:
         self.player_sprite.add_child(self.player_headlight)
 
         # Later the monsters will be placed intentionally, random locations for now to test
-        im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True, override_size=(200,200))
+        im1 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid1.png", alpha=True)
         im2 = ImageLoader.ImageLoader.GetImage("assets/imgs/Humanoid2.png", alpha=True)
         self.other_entity_group = pygame.sprite.Group()
-        for _ in range(5):
-            humanoid = entity.TwoFaced(pygame.Vector2(random.randint(16, 1264), random.randint(16, 704)), im1, im2)
+        for _ in range(1):
+            humanoid = entity.TwoFaced(pygame.Vector2(helpers.SCREEN_SIZE), im1, im2)
             self.other_entity_group.add(humanoid)
 
         self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/test_game_world.png")
@@ -98,29 +98,26 @@ class World:
         self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
         self.light_group.update(delta)
 
+        player_collision_radius = 16
+        enemy_collision_radius = 16
+
         # Update every monster or other entity.
         for other_entity in self.other_entity_group:
-            other_entity.move_towards_point(self.player_sprite.position, delta)
-            other_entity.update(pygame.Vector2(), 0, delta)
+            #other_entity.move_towards_point(self.player_sprite.position, delta)
+            player_offset = self.player_sprite.position - other_entity.position
+            other_entity.update(player_offset.normalize() * 100, 0, delta)
             visible = self.player_headlight.in_light(other_entity.position)
             other_entity.visible = visible
-        
-        # Since the player's rect grows and shrinks as their image rotates,
-        # getting consistent collision will be difficult. Here we are creating a test
-        # sprite and giving it a constant 32x32 rect to fake collision.
-        # TODO: Change this to be radial or mask based collision
-        test_sprite = pygame.sprite.Sprite()
-        test_sprite.rect = pygame.Rect(0, 0, 32, 32)
-        test_sprite.rect.center = self.player_sprite.rect.center
-        if (collided_enemy := pygame.sprite.spritecollideany(test_sprite, self.other_entity_group)) is not None:
-            sound_choice = random.choice(self.hurt_noises)
-            self.sound_library[sound_choice].play()
 
-            # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
-            # the player getting yeeted back, and once they land, reposition and reactivate the player. 
-            # Avoids the messiness of the player moving while getting launched. 
-            self.player_sprite.velocity = pygame.Vector2()
-            collided_enemy.kill()
+            if (other_entity.position - self.player_sprite.position).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
+                sound_choice = random.choice(self.hurt_noises)
+                self.sound_library[sound_choice].play()
+
+                # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
+                # the player getting yeeted back, and once they land, reposition and reactivate the player. 
+                # Avoids the messiness of the player moving while getting launched. 
+                self.player_sprite.velocity = pygame.Vector2()
+                other_entity.kill()
 
         self.camera.position = self.player_sprite.position
         self.fog_timer += delta
