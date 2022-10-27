@@ -44,10 +44,10 @@ class Entity(pygame.sprite.Sprite):
         self.state_manager = StateManager()
 
         # Animation
-        self.load_animations()
         self.time_between_animation_frames = 1/12 # 12 frames / second
         self.animation_timer = self.time_between_animation_frames
         self.animation_index = 0
+        self.load_animations()
 
     def load_animations(self) -> None:
         """Subclasses should overwrite this and load image sequences into 

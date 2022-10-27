@@ -10,7 +10,6 @@ class CreatureStateWaiting(State):
         State.__init__(self, "waiting")
         self.creature_sprite = creature_sprite
         self.player_sprite_target = player_sprite
-        self.goal_distance = 250 # px
 
     def entry_actions(self) -> None:
         self.creature_sprite.set_animation('idle')
@@ -66,7 +65,7 @@ class CreatureStateAttacking(State):
         self.target_sprite = target_sprite
     
     def entry_actions(self) -> None:
-        self.creature_sprite.set_animation('death')
+        self.creature_sprite.set_animation('bite')
 
     def exit_actions(self) -> None:
         pass
