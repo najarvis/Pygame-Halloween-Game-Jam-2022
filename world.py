@@ -35,7 +35,7 @@ class World:
         self.bike_scenery_sprite = None
         self.player_in_animation = False
 
-        self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/test_game_world.png")
+        self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/TheMap.png")
 
         self.fog_timer = 0
         self.sound_timer = 0
