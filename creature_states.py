@@ -38,13 +38,13 @@ class CreatureStateSeeking(State):
 
     def entry_actions(self) -> None:
         self.creature_sprite.set_animation('idle')
-        self.creature_sprite.target = self.target_sprite.position
+        self.creature_sprite.target = self.target_sprite.position.copy()
 
     def exit_actions(self) -> None:
         pass
 
     def do_actions(self) -> None:
-        pass
+        self.creature_sprite.target = self.target_sprite.position.copy()
 
     def check_conditions(self) -> str | None:
         offset = self.target_sprite.position - self.creature_sprite.position
@@ -66,12 +66,13 @@ class CreatureStateAttacking(State):
     
     def entry_actions(self) -> None:
         self.creature_sprite.set_animation('bite')
+        self.creature_sprite.target = self.target_sprite.position.copy()
 
     def exit_actions(self) -> None:
         pass
 
     def do_actions(self) -> None:
-        pass
+        self.creature_sprite.target = self.target_sprite.position.copy()
 
     def check_conditions(self) -> str | None:
         offset = self.target_sprite.position - self.creature_sprite.position

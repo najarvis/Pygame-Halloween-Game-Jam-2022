@@ -26,16 +26,21 @@ class World:
         self.light_group = pygame.sprite.Group(self.player_headlight)
         self.player_sprite.add_child(self.player_headlight)
 
+        self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/TheMap.png")
+
+        self.other_entity_group = pygame.sprite.Group()
         # Later the monsters will be placed intentionally, random locations for now to test
-        creature_sprite = creature.Creature(pygame.Vector2(helpers.CENTER), self)
-        self.other_entity_group = pygame.sprite.Group(creature_sprite)
+        for _ in range(10):
+            max_width, max_height = self.world_background.get_size()
+            r_x, r_y = random.randint(0, max_width), random.randint(0, max_height)
+            creature_sprite = creature.Creature(pygame.Vector2(r_x, r_y), self)
+            self.other_entity_group.add(creature_sprite)
 
         self.scenery_entities = pygame.sprite.Group()
         self.player_scenery_sprite = None
         self.bike_scenery_sprite = None
         self.player_in_animation = False
 
-        self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/TheMap.png")
 
         self.fog_timer = 0
         self.sound_timer = 0
@@ -74,6 +79,11 @@ class World:
         light_rect = self.player_headlight.rect.copy()
         light_rect.center = helpers.CENTER
         view_image.blit(self.player_headlight.image, light_rect)
+
+        for sprite in self.other_entity_group:
+            new_rect = sprite.rect.copy()
+            new_rect.center = self.camera.world_to_screen(pygame.Vector2(new_rect.center))
+            view_image.blit(sprite.image, new_rect)
 
         self.fog_image.blit(view_image, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
 

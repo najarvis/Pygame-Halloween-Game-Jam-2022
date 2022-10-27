@@ -62,7 +62,6 @@ def run():
                             association = prop_associations[prop.path]
                             f.write(f"{association}, {world_position}\n")
 
-
             elif event.type == pygame.MOUSEWHEEL:
                 # zooming
                 old_mouse_world = world_camera.screen_to_world(mouse_pos)
