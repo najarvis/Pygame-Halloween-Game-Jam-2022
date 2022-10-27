@@ -37,7 +37,8 @@ class Creature(entity.Entity):
 
         self.animations['idle'] = ImageLoader.ImageLoader.return_image_set("creature_idle", None, True)
         self.animations['death'] = ImageLoader.ImageLoader.return_image_set("creature_death", None, True)
-        self.current_animation = self.animations['idle']
+        self.animations['bite'] = ImageLoader.ImageLoader.return_image_set("creature_Bite", None, True)
+        self.set_animation('idle')
 
     def update(self, delta: float) -> None:
         self.state_manager.do_state()
