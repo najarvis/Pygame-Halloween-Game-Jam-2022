@@ -1,5 +1,7 @@
-import pygame
+import glob
 import math
+
+import pygame
 
 from gametools import ImageLoader
 import entity
@@ -12,6 +14,20 @@ class Player(entity.Entity):
         entity.Entity.__init__(self, position, player_img, world)
 
         self.on_bike = True
+
+    def load_animations(self) -> None:
+        self.animations = {}
+        self.current_animation = None
+
+        path_start = "assets/imgs/Player/"
+        for fname in glob.iglob(path_start + "*.png"):
+            ImageLoader.ImageLoader.GetImage(fname, alpha=True) # Cache all the images
+
+        self.animations['falling'] = ImageLoader.ImageLoader.return_image_set("player_fall", None, True)
+        self.animations['biking'] = ImageLoader.ImageLoader.return_image_set("player_biking", None, True)
+        self.animations['walking'] = ImageLoader.ImageLoader.return_image_set("player_walking", None, True)
+        self.current_animation = self.animations['biking']
+        self.time_between_animation_frames = 100
     
     def update(self, acceleration: pygame.Vector2, rotation: float, delta: float):
         self.velocity += acceleration * delta
@@ -28,6 +44,7 @@ class Player(entity.Entity):
         self.position += move_velocity * delta
 
         self.rect.center = self.position
+        self.update_animation(delta)
         self.update_children()
         self.update_rect()
 

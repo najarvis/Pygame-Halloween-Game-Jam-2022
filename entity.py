@@ -15,6 +15,8 @@ class Entity(pygame.sprite.Sprite):
     def __init__(self, position: pygame.Vector2(), base_image: pygame.Surface, world: world.World):
         pygame.sprite.Sprite.__init__(self)
         self.base_image = base_image
+        if base_image is None:
+            self.base_image = pygame.Surface((32, 32))
         self.image = self.base_image.copy()
 
         self._position = position
@@ -41,7 +43,21 @@ class Entity(pygame.sprite.Sprite):
 
         self.state_manager = StateManager()
 
-    def update(self, acceleration: pygame.Vector2, rotation: float, delta: float) -> None:
+        # Animation
+        self.load_animations()
+        self.time_between_animation_frames = 1/12 # 12 frames / second
+        self.animation_timer = self.time_between_animation_frames
+        self.animation_index = 0
+
+    def load_animations(self) -> None:
+        """Subclasses should overwrite this and load image sequences into 
+        self.animations. <c.f. Creature.load_animations>
+        """
+        
+        self.animations = {}
+        self.current_animation = None
+
+    def update(self, acceleration: pygame.Vector2, delta: float) -> None:
         """
         Update function called every frame. Updates the entity's position and orientation.
 
@@ -57,7 +73,10 @@ class Entity(pygame.sprite.Sprite):
 
         self.rect.center = self.position
 
-        self.orientation += rotation * delta
+        # self.orientation += rotation * delta
+        # Entities now face the direction in which they are moving.
+        orientation_vel = pygame.Vector2(self.velocity.x, -self.velocity.y)
+        self.orientation = (orientation_vel.as_polar()[1] - 90) % 360
 
         self.update_children()
         self.update_rect()
@@ -72,6 +91,30 @@ class Entity(pygame.sprite.Sprite):
         # Update the sprite's image to correspond with the updated rotation
         if self.dirty:
             self.image = pygame.transform.rotate(self.base_image, self.orientation)
+
+    def update_animation(self, delta: float) -> None:
+        if self.current_animation is None:
+            return
+    
+        if self.animation_timer < 0:
+            self.animation_timer += self.time_between_animation_frames
+            self.animation_index += 1
+            self.animation_index %= len(self.current_animation)
+
+        self.base_image = self.current_animation[self.animation_index]
+        self.animation_timer -= delta
+
+    def add_animation(self, name: str, image_list: list[pygame.Surface]):
+        self.animations[name] = image_list
+
+    def set_animation(self, animation_name):
+        if animation_name not in self.animations:
+            raise KeyError(f"Animation `{animation_name}` not found in list")
+
+        self.current_animation = self.animations[animation_name]
+        self.animation_index = 0
+        self.animation_timer = self.time_between_animation_frames
+        self.dirty = True
 
     def add_child(self, other_entity: Entity) -> None:
         self.children.append(other_entity)
@@ -197,4 +240,7 @@ class SceneryEntity(Entity):
             if offset.length() > offset.epsilon:
                 offset.scale_to_length(speed)
                 self.position += offset * delta
+
+        self.update_animation(delta)
+        self.update_rect()
             
