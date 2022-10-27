@@ -29,7 +29,7 @@ class World:
         # Later the monsters will be placed intentionally, random locations for now to test
         creature_sprite = creature.Creature(pygame.Vector2(helpers.CENTER), self)
         self.other_entity_group = pygame.sprite.Group(creature_sprite)
-        
+
         self.scenery_entities = pygame.sprite.Group()
         self.player_scenery_sprite = None
         self.bike_scenery_sprite = None
@@ -106,6 +106,7 @@ class World:
     def update(self, delta: float) -> None:
         """Update the position and states of all entities in the game"""
 
+        # Player objects, if the player is in an animation don't update their normal class
         self.scenery_entities.update(delta)
         if self.player_scenery_sprite is not None:
             self.player_in_animation = True
@@ -118,6 +119,8 @@ class World:
             # First start with the player and their light sources
             self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
             self.player_in_animation = False
+
+        # Light
         self.light_group.update(delta)
 
         player_collision_radius = 16
@@ -143,16 +146,17 @@ class World:
                 self.player_sprite.on_bike = False
                 other_entity.kill()
 
-                bike_img = ImageLoader.ImageLoader.GetImage("assets/imgs/bike.png")
                 self.player_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), None, self)
                 self.player_scenery_sprite.add_keyframe(self.player_sprite.position + player_offset_normalize * 100, 2.0)
                 self.player_scenery_sprite.add_animation('falling', self.player_sprite.animations['falling'])
                 self.player_scenery_sprite.set_animation('falling')
                 self.scenery_entities.add(self.player_scenery_sprite)
                 
+                bike_img = ImageLoader.ImageLoader.GetImage("assets/imgs/bike.png")
                 self.bike_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), bike_img, self)
                 self.bike_scenery_sprite.add_keyframe(self.player_sprite.position - player_offset_normalize * 100, 1.5)
                 self.scenery_entities.add(self.bike_scenery_sprite)
+
                 self.player_in_animation = True
                 self.player_sprite.set_animation('walking')
 
