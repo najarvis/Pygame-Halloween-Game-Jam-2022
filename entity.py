@@ -156,7 +156,7 @@ class Entity(pygame.sprite.Sprite):
             self._position = new_position
             self.dirty = False
 
-    position = property(get_position, set_position)
+    position: pygame.Vector2 = property(get_position, set_position)
 
 class TwoFaced(Entity):
     """Playing on the theme idea, TwoFaced is an entity with two forms, with

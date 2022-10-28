@@ -1,4 +1,6 @@
-Art
-  - Literally everything better
-  - Animations?
-
+- Place grandma
+- Some sort of instructions
+- Can't get knocked off the map
+- Place creatures, not random
+- Radial messages
+  - Messaging system

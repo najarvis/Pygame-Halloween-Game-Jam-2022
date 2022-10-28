@@ -1,3 +1,4 @@
+from lzma import is_check_supported
 import math
 import glob
 import random
@@ -32,23 +33,31 @@ class World:
 
         self.other_entity_group = pygame.sprite.Group()
         # Later the monsters will be placed intentionally, random locations for now to test
-        for _ in range(10):
-            max_width, max_height = self.world_background.get_size()
-            r_x, r_y = random.randint(0, max_width), random.randint(0, max_height)
-            creature_sprite = creature.Creature(pygame.Vector2(r_x, r_y), self)
-            self.other_entity_group.add(creature_sprite)
+        with open("mapdata.txt") as f:
+            for line in f:
+                prop_type, prop_x, prop_y = line.split(',')
+                coord = pygame.Vector2(int(prop_x), int(prop_y))
+                creature_sprite = creature.Creature(coord, self)
+                self.other_entity_group.add(creature_sprite)
 
         self.scenery_entities = pygame.sprite.Group()
         self.player_scenery_sprite = None
         self.bike_scenery_sprite = None
         self.player_in_animation = False
 
-
         self.fog_timer = 0
         self.sound_timer = 0
 
-        # self.create_fog_images()
-        # self.init_sounds()
+        self.grandma_position = pygame.Vector2(6755, 3268)
+        self.grandma_image = ImageLoader.ImageLoader.GetImage("assets/imgs/Props/Grandma.png")
+        self.grandma_entity = entity.SceneryEntity(self.grandma_position, self.grandma_image, self)
+        self.scenery_entities.add(self.grandma_entity)
+
+        # self.player_sprite.position.update(self.grandma_position)
+
+        self.init_sounds()
+
+        self.won = False
 
     def init_sounds(self) -> None:
         """Load sounds from the disc and create our library of sounds"""
@@ -82,10 +91,10 @@ class World:
         light_rect.center = helpers.CENTER
         view_image.blit(self.player_headlight.image, light_rect)
 
-        for sprite in self.other_entity_group:
-            new_rect = sprite.rect.copy()
-            new_rect.center = self.camera.world_to_screen(pygame.Vector2(new_rect.center))
-            view_image.blit(sprite.image, new_rect)
+        # for sprite in self.other_entity_group:
+        #     new_rect = sprite.rect.copy()
+        #     new_rect.center = self.camera.world_to_screen(pygame.Vector2(new_rect.center))
+        #     view_image.blit(sprite.image, new_rect)
 
         self.fog_image.blit(view_image, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
 
@@ -131,6 +140,10 @@ class World:
             # First start with the player and their light sources
             self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
             self.player_in_animation = False
+
+            if (self.grandma_position - self.player_sprite.position).length() < 200:
+                self.other_entity_group.empty()
+                self.won = True
             # self.lock_to_mask(self.world_mask_img)
 
         # Light
@@ -154,24 +167,32 @@ class World:
                     self.player_sprite.kill()
                     return
                     
-                # sound_choice = random.choice(self.hurt_noises)
-                # self.sound_library[sound_choice].play()
+                sound_choice = random.choice(self.hurt_noises)
+                self.sound_library[sound_choice].play()
 
-                # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
-                # the player getting yeeted back, and once they land, reposition and reactivate the player. 
-                # Avoids the messiness of the player moving while getting launched. 
                 self.player_sprite.on_bike = False
                 other_entity.kill()
 
                 self.player_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), None, self)
-                self.player_scenery_sprite.add_keyframe(self.player_sprite.position + player_offset_normalize * 100, 2.0)
+                dist = 100
+                player_target = self.player_sprite.position + player_offset_normalize * dist
+                while not self.is_coord_in_mask(player_target):
+                    dist /= 2
+                    player_target = self.player_sprite.position + player_offset_normalize * dist
+                self.player_scenery_sprite.add_keyframe(player_target, 2.0)
                 self.player_scenery_sprite.add_animation('falling', self.player_sprite.animations['falling'])
                 self.player_scenery_sprite.set_animation('falling')
                 self.scenery_entities.add(self.player_scenery_sprite)
                 
                 bike_img = ImageLoader.ImageLoader.GetImage("assets/imgs/bike.png")
                 self.bike_scenery_sprite = entity.SceneryEntity(self.player_sprite.position.copy(), bike_img, self)
-                self.bike_scenery_sprite.add_keyframe(self.player_sprite.position - player_offset_normalize * 100, 1.5)
+                dist = 100
+                bike_target = self.player_sprite.position - player_offset_normalize * dist
+                while not self.is_coord_in_mask(bike_target):
+                    dist /= 2
+                    bike_target = self.player_sprite.position - player_offset_normalize * dist
+                self.bike_scenery_sprite.add_keyframe(bike_target, 1.5)
+
                 self.scenery_entities.add(self.bike_scenery_sprite)
 
                 self.player_in_animation = True
@@ -182,11 +203,11 @@ class World:
 
         # Play ambient sounds from time to time to keep the player on edge
         # TODO: Make the sounds get louder the closer to an enemy you are?
-        # self.sound_timer -= delta
-        # if self.sound_timer < 0:
-        #     sound_choice = random.choice(self.ambient_noises)
-        #     self.sound_library[sound_choice].play()
-        #     self.sound_timer += 15
+        self.sound_timer -= delta
+        if self.sound_timer < 0:
+            sound_choice = random.choice(self.ambient_noises)
+            self.sound_library[sound_choice].play()
+            self.sound_timer += 15
 
     def lock_to_mask(self, sprite: pygame.sprite.Sprite, movement_vector: pygame.Vector2) -> pygame.Vector2:
         pos = sprite.position
