@@ -56,7 +56,7 @@ class World:
         self.sound_library = {}
 
         path_start = "assets/sound/"
-        for fname in glob.iglob(path_start + "*.mp3"):
+        for fname in glob.iglob(path_start + "*.ogg"):
             sound_name = fname[len(path_start):-4]
             self.sound_library[sound_name] = pygame.mixer.Sound(fname)
 
