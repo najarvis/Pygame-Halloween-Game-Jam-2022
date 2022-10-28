@@ -2,7 +2,7 @@ import pygame
 
 import helpers
 import world
-
+import os
 
 def run():
     screen = pygame.display.set_mode(helpers.SCREEN_SIZE)
@@ -26,6 +26,16 @@ def run():
         game_world.handle_input()
         game_world.update(delta)
 
+        if not game_world.player_sprite.alive():
+            done = True
+
+        pos = pygame.mouse.get_pos()
+        try:
+            world_pos = game_world.camera.screen_to_world(pos)
+            pygame.display.set_caption(f"coord: {world_pos}, in mask: {game_world.world_mask.get_at(world_pos)}")
+        except IndexError:
+            pygame.display.set_caption(f"OFF MAP")
+
         # Background
         screen.fill((50, 25, 15))
 
@@ -35,4 +45,5 @@ def run():
     pygame.quit()
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     run()

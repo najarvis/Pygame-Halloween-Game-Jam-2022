@@ -27,6 +27,8 @@ class World:
         self.player_sprite.add_child(self.player_headlight)
 
         self.world_background = ImageLoader.ImageLoader.GetImage("assets/imgs/TheMap.png")
+        self.world_mask_img = ImageLoader.ImageLoader.GetImage("assets/imgs/TheMapMask.png")
+        self.world_mask = pygame.mask.from_threshold(self.world_mask_img, (0, 0, 0, 255), threshold=(10, 10, 10, 255))
 
         self.other_entity_group = pygame.sprite.Group()
         # Later the monsters will be placed intentionally, random locations for now to test
@@ -129,6 +131,7 @@ class World:
             # First start with the player and their light sources
             self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
             self.player_in_animation = False
+            # self.lock_to_mask(self.world_mask_img)
 
         # Light
         self.light_group.update(delta)
@@ -147,6 +150,10 @@ class World:
             other_entity.visible = visible
 
             if not self.player_in_animation and (player_offset).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
+                if not self.player_sprite.on_bike:
+                    self.player_sprite.kill()
+                    return
+                    
                 sound_choice = random.choice(self.hurt_noises)
                 self.sound_library[sound_choice].play()
 
@@ -180,6 +187,19 @@ class World:
             sound_choice = random.choice(self.ambient_noises)
             self.sound_library[sound_choice].play()
             self.sound_timer += 15
+
+    def lock_to_mask(self, sprite: pygame.sprite.Sprite, movement_vector: pygame.Vector2) -> pygame.Vector2:
+        pos = sprite.position
+        goal_pos = pos + movement_vector
+        if self.is_coord_in_mask(goal_pos):
+            return movement_vector
+        
+        else:
+            return pygame.Vector2()
+    
+    def is_coord_in_mask(self, world_coord: pygame.Vector2):
+        # floor_coord = (int(world_coord.x), int(world_coord.y))
+        return self.world_mask.get_at(world_coord)
 
     def draw_group_offset(self, group: pygame.sprite.Group, surface: pygame.Surface) -> None:
         """Draw the entities in a group relative to the camera"""

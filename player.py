@@ -41,7 +41,7 @@ class Player(entity.Entity):
         orientation_rad = (self.orientation * math.pi) / 180.0
         move_velocity.x = math.cos(orientation_rad) * self.velocity.y
         move_velocity.y = -math.sin(orientation_rad) * self.velocity.y
-        self.position += move_velocity * delta
+        self.position += self.world.lock_to_mask(self, move_velocity * delta)
 
         self.rect.center = self.position
         self.update_animation(delta)
