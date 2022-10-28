@@ -48,7 +48,7 @@ class World:
         self.sound_timer = 0
 
         # self.create_fog_images()
-        self.init_sounds()
+        # self.init_sounds()
 
     def init_sounds(self) -> None:
         """Load sounds from the disc and create our library of sounds"""
@@ -154,8 +154,8 @@ class World:
                     self.player_sprite.kill()
                     return
                     
-                sound_choice = random.choice(self.hurt_noises)
-                self.sound_library[sound_choice].play()
+                # sound_choice = random.choice(self.hurt_noises)
+                # self.sound_library[sound_choice].play()
 
                 # TODO: When player gets hit, deactivate the player, spawn a dummy sprite object that represents
                 # the player getting yeeted back, and once they land, reposition and reactivate the player. 
@@ -182,11 +182,11 @@ class World:
 
         # Play ambient sounds from time to time to keep the player on edge
         # TODO: Make the sounds get louder the closer to an enemy you are?
-        self.sound_timer -= delta
-        if self.sound_timer < 0:
-            sound_choice = random.choice(self.ambient_noises)
-            self.sound_library[sound_choice].play()
-            self.sound_timer += 15
+        # self.sound_timer -= delta
+        # if self.sound_timer < 0:
+        #     sound_choice = random.choice(self.ambient_noises)
+        #     self.sound_library[sound_choice].play()
+        #     self.sound_timer += 15
 
     def lock_to_mask(self, sprite: pygame.sprite.Sprite, movement_vector: pygame.Vector2) -> pygame.Vector2:
         pos = sprite.position
