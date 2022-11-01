@@ -1,3 +1,4 @@
+from ast import literal_eval
 from lzma import is_check_supported
 import math
 import glob
@@ -35,10 +36,11 @@ class World:
         # Later the monsters will be placed intentionally, random locations for now to test
         with open("mapdata.txt") as f:
             for line in f:
-                prop_type, prop_x, prop_y = line.split(',')
-                coord = pygame.Vector2(int(prop_x), int(prop_y))
-                creature_sprite = creature.Creature(coord, self)
-                self.other_entity_group.add(creature_sprite)
+                prop_type, prop_coord = literal_eval(line)
+                if prop_type == 'Creature':
+                    coord = pygame.Vector2(prop_coord)
+                    creature_sprite = creature.Creature(coord, self)
+                    self.other_entity_group.add(creature_sprite)
 
         self.scenery_entities = pygame.sprite.Group()
         self.player_scenery_sprite = None
@@ -62,7 +64,7 @@ class World:
     def init_sounds(self) -> None:
         """Load sounds from the disc and create our library of sounds"""
         pygame.mixer.init()
-        self.sound_library = {}
+        self.sound_library: dict[str, pygame.mixer.Sound] = {}
 
         path_start = "assets/sound/"
         for fname in glob.iglob(path_start + "*.ogg"):
@@ -91,6 +93,7 @@ class World:
         light_rect.center = helpers.CENTER
         view_image.blit(self.player_headlight.image, light_rect)
 
+        # Wanted to get just the eyes to show, TODO: Fix glow
         # for sprite in self.other_entity_group:
         #     new_rect = sprite.rect.copy()
         #     new_rect.center = self.camera.world_to_screen(pygame.Vector2(new_rect.center))
@@ -141,7 +144,8 @@ class World:
             self.player_group.update(acceleration=self.player_acceleration, rotation=self.player_rotation, delta=delta)
             self.player_in_animation = False
 
-            if (self.grandma_position - self.player_sprite.position).length() < 200:
+            # The player wins if they get close enough to grandma
+            if (self.grandma_position - self.player_sprite.position).length_squared() < 80 * 80:
                 self.other_entity_group.empty()
                 self.won = True
             # self.lock_to_mask(self.world_mask_img)
@@ -154,16 +158,16 @@ class World:
 
         # Update every monster or other entity.
         for other_entity in self.other_entity_group:
-            #other_entity.move_towards_point(self.player_sprite.position, delta)
-            player_offset = self.player_sprite.position - other_entity.position
+            player_offset: pygame.Vector2 = self.player_sprite.position - other_entity.position
             player_offset_normalize = player_offset.normalize()
-            #enemy_acceleration = player_offset.normalize() * 100 # Accelerate towards the player at 100px/s^2
+
             other_entity.update(delta)
             visible = self.player_headlight.in_light(other_entity.position)
             other_entity.visible = visible
 
-            if not self.player_in_animation and (player_offset).magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
+            if not self.player_in_animation and player_offset.magnitude_squared() < (player_collision_radius + enemy_collision_radius) ** 2:
                 if not self.player_sprite.on_bike:
+                    # Player loses if they are hit by a monster while knocked off their bike
                     self.player_sprite.kill()
                     return
                     
@@ -219,8 +223,11 @@ class World:
             return pygame.Vector2()
     
     def is_coord_in_mask(self, world_coord: pygame.Vector2):
-        # floor_coord = (int(world_coord.x), int(world_coord.y))
-        return self.world_mask.get_at(world_coord)
+        try:
+            return self.world_mask.get_at(world_coord)
+        except IndexError:
+            # if the world_coord is off the map
+            return False
 
     def draw_group_offset(self, group: pygame.sprite.Group, surface: pygame.Surface) -> None:
         """Draw the entities in a group relative to the camera"""

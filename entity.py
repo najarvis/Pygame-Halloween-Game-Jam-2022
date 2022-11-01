@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pygame
 from state_manager import StateManager
-from creature_states import CreatureStateSeeking, CreatureStateWaiting
 import world
 
 class Entity(pygame.sprite.Sprite):
@@ -154,7 +153,6 @@ class Entity(pygame.sprite.Sprite):
         # NOTE: This does NOT get called if a component of position is changed (i.e. pos.x += 1)
         if new_position != self._position:
             self._position = new_position
-            self.dirty = False
 
     position: pygame.Vector2 = property(get_position, set_position)
 
@@ -192,7 +190,7 @@ class SceneryEntity(Entity):
     (Unless you plan to add more keyframes).
     """
 
-    def __init__(self, position: pygame.Vector, image: pygame.Surface, world: world.World):
+    def __init__(self, position: pygame.Vector2, image: pygame.Surface, world: world.World):
         Entity.__init__(self, position, image, world)
         self.timer = 0
         self.keyframes = []
@@ -235,7 +233,7 @@ class SceneryEntity(Entity):
             self.current_goal = None
             self.timer = 0
         else:
-            offset = self.current_goal - self.position
+            offset: pygame.Vector2 = self.current_goal - self.position
             speed = offset.length() / self.timer 
             if offset.length() > offset.epsilon:
                 offset.scale_to_length(speed)

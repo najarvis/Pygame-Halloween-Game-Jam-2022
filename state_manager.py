@@ -24,7 +24,7 @@ class State:
 class StateManager:
 
     def __init__(self):
-        self.states = {}
+        self.states: dict[str, State] = {}
         self.active_state: State = None
 
     def add_state(self, new_state: State) -> None:

@@ -94,7 +94,6 @@ def run():
             if win_timer <= 0:
                 state = GameState.MENU
 
-
         pygame.display.update()
     pygame.quit()
 

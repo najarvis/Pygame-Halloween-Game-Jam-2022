@@ -60,7 +60,7 @@ def run():
                         for prop in placed_props:
                             world_position = prop.rect.center
                             association = prop_associations[prop.path]
-                            f.write(f"{association}, {world_position}\n")
+                            f.write(f"\"{association}\", {world_position}\n")
 
             elif event.type == pygame.MOUSEWHEEL:
                 # zooming
